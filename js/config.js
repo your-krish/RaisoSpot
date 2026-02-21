@@ -7,4 +7,4 @@ const MAX_IMAGES_PER_POST = 2;
 const MAX_POSTS_PER_DAY = 4;
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

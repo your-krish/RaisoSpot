@@ -1,0 +1,14 @@
+{
+  "name": "RaisoSpot",
+  "short_name": "RaisoSpot",
+  "description": "Your campus, in one spot.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#F8F4EF",
+  "theme_color": "#FF6B35",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "orientation": "portrait"
+}

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#FF6B35" />
+  <meta name="description" content="RaisoSpot – your campus, in one spot." />
+  <title>RaisoSpot</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+</head>
+<body class="light" data-page="feed">
+
+  <!-- ONBOARDING OVERLAY -->
+  <div id="onboarding" class="hidden">
+    <div class="onboarding-bg"></div>
+    <div class="onboarding-card">
+      <div class="onboarding-slides">
+        <div class="slide active">
+          <div class="slide-emoji">📍</div>
+          <h1>Welcome to<br><span>RaisoSpot</span></h1>
+          <p>Your campus, in one spot.</p>
+        </div>
+        <div class="slide">
+          <div class="slide-emoji">🔍</div>
+          <h2>Explore everything</h2>
+          <p>Posts, confessions, notes, and events — no login needed to browse.</p>
+        </div>
+        <div class="slide">
+          <div class="slide-emoji">✨</div>
+          <h2>Join the conversation</h2>
+          <p>Login to post, confess, like, comment & contribute to your campus community.</p>
+          <button id="ob-google-btn" class="btn-google">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+            Continue with Google
+          </button>
+          <button id="ob-skip-btn" class="btn-skip">Skip for now</button>
+          <p class="disclaimer-small">RaisoSpot is a student-run platform created by students for students. It is not officially managed, endorsed, or affiliated with GH Raisoni College.</p>
+        </div>
+      </div>
+      <div class="slide-dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <button id="ob-next" class="btn-next">Next →</button>
+    </div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div id="login-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <button class="modal-close">✕</button>
+      <div class="modal-emoji">👀✨</div>
+      <h3>Login to join the conversation</h3>
+      <p>Post, like, comment and be part of your campus community.</p>
+      <button id="modal-google-btn" class="btn-google">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- CREATE POST MODAL -->
+  <div id="create-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box create-modal-box">
+      <button class="modal-close">✕</button>
+      <h3>Create Post</h3>
+      <div class="create-options">
+        <button class="create-opt" data-type="image">
+          <span class="opt-icon">🖼️</span>
+          <span>Image Post</span>
+        </button>
+        <button class="create-opt" data-type="confession">
+          <span class="opt-icon">🎭</span>
+          <span>Confession</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE POST MODAL -->
+  <div id="image-post-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box tall-modal">
+      <button class="modal-close">✕</button>
+      <h3>New Post</h3>
+      <div class="form-group">
+        <div id="image-drop-zone" class="drop-zone">
+          <span>📷 Tap to add images (max 2)</span>
+          <input type="file" id="image-input" accept="image/*" multiple hidden />
+        </div>
+        <div id="image-previews" class="image-previews"></div>
+      </div>
+      <div class="form-group">
+        <textarea id="post-caption" placeholder="Write a caption..." rows="3"></textarea>
+      </div>
+      <button id="submit-post" class="btn-primary">Post 🚀</button>
+    </div>
+  </div>
+
+  <!-- CONFESSION MODAL -->
+  <div id="confession-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box tall-modal">
+      <button class="modal-close">✕</button>
+      <h3>Anonymous Confession 🎭</h3>
+      <p class="warning-text">⚠️ No names. No targeting. Be respectful.</p>
+      <div class="form-group">
+        <select id="confession-category">
+          <option value="">Select category...</option>
+          <option value="crush">💕 Crush / Love</option>
+          <option value="rant">😤 College Rant</option>
+          <option value="funny">😂 Funny / Embarrassing</option>
+          <option value="academic">📚 Academic Stress</option>
+          <option value="social">👥 Friends / Social Life</option>
+          <option value="secret">🤫 Secret / Guilt</option>
+          <option value="motivation">💪 Motivation / Positivity</option>
+          <option value="other">💬 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <textarea id="confession-text" placeholder="Share your confession anonymously..." rows="5"></textarea>
+      </div>
+      <button id="submit-confession" class="btn-primary">Confess Anonymously 🎭</button>
+    </div>
+  </div>
+
+  <!-- COMMENT MODAL -->
+  <div id="comment-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box tall-modal">
+      <button class="modal-close">✕</button>
+      <h3>Comments</h3>
+      <div id="comments-list" class="comments-list"></div>
+      <div class="comment-input-row">
+        <input type="text" id="comment-input" placeholder="Write a comment..." />
+        <button id="submit-comment" class="btn-icon">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="logo">📍RaisoSpot</span>
+    </div>
+    <div class="header-right">
+      <button id="search-btn" class="icon-btn" title="Search">🔍</button>
+      <div id="user-avatar-wrap" class="hidden">
+        <img id="user-avatar" class="avatar" alt="Profile" />
+      </div>
+      <button id="header-login-btn" class="btn-login-small">Login</button>
+    </div>
+  </header>
+
+  <!-- SEARCH BAR -->
+  <div id="search-bar" class="search-bar hidden">
+    <input type="text" id="search-input" placeholder="Search posts, events, notes..." />
+    <button id="search-close">✕</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main id="main-content">
+    <!-- Feed Page -->
+    <section id="page-feed" class="page active">
+      <div class="feed-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="confession">Confessions</button>
+        <button class="filter-btn" data-filter="event">Events</button>
+        <button class="filter-btn" data-filter="announcement">📌 Pinned</button>
+      </div>
+      <div id="feed-container" class="feed-container">
+        <div class="skeleton-loader">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Academics Page -->
+    <section id="page-academics" class="page">
+      <div class="page-header-inner">
+        <h2>Academics</h2>
+      </div>
+      <div class="year-tabs">
+        <button class="year-tab active" data-year="1">1st Year</button>
+        <button class="year-tab" data-year="2">2nd Year</button>
+        <button class="year-tab" data-year="3">3rd Year</button>
+        <button class="year-tab" data-year="4">4th Year</button>
+      </div>
+      <div id="academics-content"></div>
+    </section>
+
+    <!-- Opportunities Page -->
+    <section id="page-opportunities" class="page">
+      <div class="page-header-inner">
+        <h2>Opportunities</h2>
+      </div>
+      <div class="opp-filters">
+        <select id="opp-type-filter">
+          <option value="">All Types</option>
+          <option value="internship">Internship</option>
+          <option value="placement">Placement</option>
+          <option value="hackathon">Hackathon</option>
+          <option value="competition">Competition</option>
+        </select>
+        <select id="opp-year-filter">
+          <option value="">All Years</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+        </select>
+      </div>
+      <div id="opportunities-container" class="opportunities-container"></div>
+    </section>
+
+    <!-- Settings Page -->
+    <section id="page-settings" class="page">
+      <div class="page-header-inner">
+        <h2>Settings</h2>
+      </div>
+
+      <!-- Profile -->
+      <div id="settings-profile" class="settings-section hidden">
+        <div class="profile-card">
+          <img id="settings-avatar" class="avatar-large" alt="" />
+          <div>
+            <p id="settings-name" class="profile-name"></p>
+            <p id="settings-email" class="profile-email"></p>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn-danger">Logout</button>
+      </div>
+      <div id="settings-guest" class="settings-section">
+        <p>You're browsing as a guest.</p>
+        <button id="settings-login-btn" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+          Login with Google
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <div class="setting-row">
+          <span>🌙 Dark Mode</span>
+          <label class="toggle"><input type="checkbox" id="dark-toggle" /><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span>🎞️ Reduce Animations</span>
+          <label class="toggle"><input type="checkbox" id="anim-toggle" /><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <button id="report-bug-btn" class="btn-report-bug">🐛 Report a Bug</button>
+      </div>
+
+      <!-- Lost & Found -->
+      <div class="settings-section">
+        <h4>Lost &amp; Found</h4>
+        <div class="lf-tabs">
+          <button class="lf-tab active" data-tab="lost">Lost</button>
+          <button class="lf-tab" data-tab="found">Found</button>
+          <button class="lf-tab" data-tab="resolved">Resolved</button>
+        </div>
+        <div id="lost-found-container"></div>
+        <button id="report-item-btn" class="btn-secondary">+ Report Item</button>
+      </div>
+
+      <!-- Emergency -->
+      <div class="settings-section emergency-section">
+        <h4>🆘 Emergency &amp; Help</h4>
+        <a href="tel:1800-180-5522" class="btn-emergency">📞 Emergency / Anti-Ragging</a>
+        <div class="help-links">
+          <a href="tel:112">🚑 Medical: 112</a>
+          <a href="tel:+917122662600">📞 College Helpline</a>
+        </div>
+      </div>
+
+      <!-- Campus Map -->
+      <div class="settings-section">
+        <h4>🗺️ Campus Map</h4>
+        <div class="campus-map">
+          <div class="map-placeholder">
+            <div class="map-marker" style="top:30%;left:40%" title="Main Building">🏫<span>Main Building</span></div>
+            <div class="map-marker" style="top:55%;left:25%" title="Library">📚<span>Library</span></div>
+            <div class="map-marker" style="top:60%;left:60%" title="Canteen">🍔<span>Canteen</span></div>
+            <div class="map-marker" style="top:20%;left:65%" title="Labs">🔬<span>Labs</span></div>
+            <div class="map-marker" style="top:75%;left:45%" title="Xerox">🖨️<span>Xerox</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="settings-section about-section">
+        <h4>About RaisoSpot</h4>
+        <p class="disclaimer-text">RaisoSpot is a student-run platform created by students for students. It is not officially managed, endorsed, or affiliated with GH Raisoni College.</p>
+        <p class="version-text">v1.0.0 · Made with ❤️ by students</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="feed">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Feed</span>
+    </button>
+    <button class="nav-btn" data-page="academics">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Academics</span>
+    </button>
+    <button id="create-btn" class="nav-btn create-btn">
+      <span class="nav-icon create-icon">＋</span>
+    </button>
+    <button class="nav-btn" data-page="opportunities">
+      <span class="nav-icon">💼</span>
+      <span class="nav-label">Opportunities</span>
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Bug Report Modal -->
+  <div id="bug-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <button class="modal-close">✕</button>
+      <h3>🐛 Report a Bug</h3>
+      <textarea id="bug-text" placeholder="Describe what happened..." rows="4"></textarea>
+      <button id="submit-bug" class="btn-primary">Submit Report</button>
+    </div>
+  </div>
+
+  <!-- Lost Item Modal -->
+  <div id="lost-item-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box tall-modal">
+      <button class="modal-close">✕</button>
+      <h3>Report Lost/Found Item</h3>
+      <select id="item-type">
+        <option value="lost">I Lost Something</option>
+        <option value="found">I Found Something</option>
+      </select>
+      <input type="text" id="item-name" placeholder="Item name/description" />
+      <input type="text" id="item-location" placeholder="Location (e.g. Library, Canteen)" />
+      <input type="text" id="item-contact" placeholder="Contact info (optional)" />
+      <button id="submit-item" class="btn-primary">Submit</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/feed.js"></script>
+  <script src="js/academics.js"></script>
+  <script src="js/opportunities.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

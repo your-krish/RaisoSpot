@@ -8,4 +8,5 @@ const MAX_POSTS_PER_DAY = 4;
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
 
 const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window._supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window._supabase;

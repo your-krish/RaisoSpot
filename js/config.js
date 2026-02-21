@@ -1,0 +1,11 @@
+// js/config.js
+// IMPORTANT: Replace these with your actual Supabase project credentials
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// App constants
+const MAX_IMAGES_PER_POST = 2;
+const MAX_POSTS_PER_DAY = 4;
+const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3MB

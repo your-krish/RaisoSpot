@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body class="light" data-page="feed">
 
@@ -161,6 +161,26 @@
       <h3>🐛 Report a Bug</h3>
       <textarea id="bug-text" placeholder="Describe what happened..." rows="4"></textarea>
       <button id="submit-bug" class="btn-primary" style="margin-top:12px">Submit Report</button>
+    </div>
+  </div>
+
+  <!-- REPORT POST MODAL -->
+  <div id="report-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box tall-modal">
+      <button class="modal-close">✕</button>
+      <h3>🚩 Report Post</h3>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:12px">Why are you reporting this post?</p>
+      <div class="report-cats">
+        <button class="report-cat-btn" data-cat="spam">📢 Spam or misleading</button>
+        <button class="report-cat-btn" data-cat="harassment">😡 Harassment or hate</button>
+        <button class="report-cat-btn" data-cat="inappropriate">🔞 Inappropriate or sexual content</button>
+        <button class="report-cat-btn" data-cat="violence">⚠️ Violence or dangerous activity</button>
+        <button class="report-cat-btn" data-cat="misinformation">❌ False information</button>
+        <button class="report-cat-btn" data-cat="other">💬 Other</button>
+      </div>
+      <textarea id="report-other-input" class="hidden" placeholder="Tell us more (optional)..." rows="3" style="margin-top:10px"></textarea>
+      <button id="submit-report-btn" class="btn-primary" style="margin-top:14px">Submit Report</button>
     </div>
   </div>
 
@@ -317,6 +337,9 @@
             </div>
             <div class="setting-row" style="border-bottom:none">
               <p class="disclaimer-text" style="font-size:12px;margin:0">RaisoSpot is a student-run platform created by students for students. Not officially affiliated with GH Raisoni College.</p>
+            </div>
+            <div class="setting-row" style="border-bottom:none;justify-content:center;padding-top:4px">
+              <span style="font-size:12px;color:var(--text3);font-weight:600">Version 1.0</span>
             </div>
           </div>
         </div>

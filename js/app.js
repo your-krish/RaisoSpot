@@ -1,9 +1,15 @@
 // js/app.js
 
-// ===== UTILITIES =====
+// ============================================================
+// UTILITIES
+// ============================================================
 function escapeHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function timeAgo(dateStr) {
@@ -18,6 +24,7 @@ function timeAgo(dateStr) {
 
 function showToast(msg, duration = 3000) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.remove('hidden');
   clearTimeout(toast._timer);
@@ -30,13 +37,15 @@ function showModal(id) {
 
 function closeAllModals() {
   document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+  document.getElementById('post-overlay')?.remove();
 }
 
-// ===== NAVIGATION =====
+// ============================================================
+// NAVIGATION
+// ============================================================
 let currentPage = 'feed';
 
 function navigateTo(page) {
-  // Guard: profile page requires auth
   if (page === 'profile' && !currentUser) {
     showModal('login-modal');
     return;
@@ -53,18 +62,17 @@ function navigateTo(page) {
 
   currentPage = page;
 
-  // Always reload data on navigation to fix stale content bug
+  // Always reload fresh data on tab switch
   if (page === 'feed') loadFeed(currentFilter);
   if (page === 'academics') loadAcademics(document.querySelector('.year-tab.active')?.dataset?.year || '1');
   if (page === 'opportunities') loadOpportunities();
   if (page === 'more') loadLostFound('lost');
-  if (page === 'profile') {
-    updateProfilePage();
-    loadProfilePosts();
-  }
+  if (page === 'profile') { updateProfilePage(); loadProfilePosts(); }
 }
 
-// ===== ONBOARDING =====
+// ============================================================
+// ONBOARDING
+// ============================================================
 function initOnboarding() {
   if (localStorage.getItem('raisospot_onboarding')) return;
   document.getElementById('onboarding').classList.remove('hidden');
@@ -77,8 +85,8 @@ function initOnboarding() {
   function goTo(n) {
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
-    slides[n].classList.add('active');
-    dots[n].classList.add('active');
+    slides[n]?.classList.add('active');
+    dots[n]?.classList.add('active');
     nextBtn.textContent = n === slides.length - 1 ? 'Get Started' : 'Next →';
   }
 
@@ -87,8 +95,8 @@ function initOnboarding() {
     else finishOnboarding();
   });
 
-  document.getElementById('ob-google-btn').addEventListener('click', signInWithGoogle);
-  document.getElementById('ob-skip-btn').addEventListener('click', finishOnboarding);
+  document.getElementById('ob-google-btn')?.addEventListener('click', signInWithGoogle);
+  document.getElementById('ob-skip-btn')?.addEventListener('click', finishOnboarding);
 }
 
 function finishOnboarding() {
@@ -96,45 +104,109 @@ function finishOnboarding() {
   document.getElementById('onboarding').classList.add('hidden');
 }
 
-// ===== MORE PAGE PANELS =====
+// ============================================================
+// MORE PAGE PANELS
+// ============================================================
 function toggleMorePanel(panelId) {
   const panels = ['more-map-panel', 'more-lf-panel', 'more-emergency-panel'];
   panels.forEach(id => {
     const el = document.getElementById(id);
-    if (id === panelId) {
-      el?.classList.toggle('hidden');
-    } else {
-      el?.classList.add('hidden');
-    }
+    if (!el) return;
+    if (id === panelId) el.classList.toggle('hidden');
+    else el.classList.add('hidden');
   });
 }
 
-// ===== SEARCH =====
+// ============================================================
+// SEARCH — fixed: Enter triggers, results stay visible
+// ============================================================
 let searchTimeout;
+let searchOpen = false;
+
 function initSearch() {
+  const searchBar = document.getElementById('search-bar');
   const input = document.getElementById('search-input');
+  const searchBtn = document.getElementById('search-btn');
+  const closeBtn = document.getElementById('search-close');
+
+  // Open / close toggle
+  searchBtn?.addEventListener('click', () => {
+    searchOpen = !searchOpen;
+    searchBar.classList.toggle('hidden', !searchOpen);
+    if (searchOpen) {
+      input.focus();
+    } else {
+      input.value = '';
+    }
+  });
+
+  // Close button — explicit dismiss only
+  closeBtn?.addEventListener('click', () => {
+    searchOpen = false;
+    searchBar.classList.add('hidden');
+    input.value = '';
+    // Restore feed
+    loadFeed(currentFilter);
+  });
+
+  // Live search on typing
   input?.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => performSearch(input.value.trim()), 400);
+    const q = input.value.trim();
+    if (!q) return;
+    searchTimeout = setTimeout(() => performSearch(q), 350);
+  });
+
+  // Enter key — trigger immediately, do NOT close bar
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      clearTimeout(searchTimeout);
+      const q = input.value.trim();
+      if (q) performSearch(q);
+    }
   });
 }
 
 async function performSearch(query) {
   if (!query) return;
-  const { data } = await supabase.from('posts').select('*').eq('status', 'active')
-    .ilike('caption', `%${query}%`).limit(20);
-  navigateTo('feed');
-  document.getElementById('search-bar').classList.add('hidden');
+
+  // Switch to feed page to show results, but keep search bar open
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-feed')?.classList.add('active');
+  document.querySelector('.nav-btn[data-page="feed"]')?.classList.add('active');
+  currentPage = 'feed';
+
   const container = document.getElementById('feed-container');
+  container.innerHTML = '<div class="skeleton-loader"><div class="skeleton-card"></div><div class="skeleton-card"></div></div>';
+
+  // Search by caption OR author name
+  const { data } = await supabase
+    .from('posts_with_counts')
+    .select('*')
+    .eq('status', 'active')
+    .or(`caption.ilike.%${query}%,author_name.ilike.%${query}%`)
+    .limit(20);
+
   container.innerHTML = '';
+
   if (!data || data.length === 0) {
-    container.innerHTML = `<div class="no-results">No results for "${escapeHtml(query)}"</div>`;
+    container.innerHTML = `
+      <div class="no-results">
+        <div style="font-size:40px;text-align:center;margin-bottom:8px">🔍</div>
+        <p style="text-align:center;color:var(--text3)">No results for "<strong>${escapeHtml(query)}</strong>"</p>
+      </div>`;
     return;
   }
+
   data.forEach(p => container.appendChild(renderPost(p)));
+  if (currentUser) loadUserLikes(data.map(p => p.id));
 }
 
-// ===== INIT =====
+// ============================================================
+// MAIN INIT
+// ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
   await initAuth();
   initOnboarding();
@@ -142,22 +214,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSearch();
   loadFeed('all');
 
-  // Nav buttons
+  // ── Navigation ──
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     btn.addEventListener('click', () => navigateTo(btn.dataset.page));
   });
 
-  // Avatar click → profile
+  // Avatar → profile
   document.getElementById('user-avatar')?.addEventListener('click', () => {
     if (currentUser) navigateTo('profile');
   });
 
-  // Create button
+  // ── Create post ──
   document.getElementById('create-btn').addEventListener('click', () => {
     requireAuth(() => showModal('create-modal'));
   });
 
-  // Create options
   document.querySelectorAll('.create-opt').forEach(opt => {
     opt.addEventListener('click', () => {
       closeAllModals();
@@ -175,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Feed filters
+  // ── Feed filters ──
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -184,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Year tabs
+  // ── Year tabs ──
   document.querySelectorAll('.year-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('active'));
@@ -193,42 +264,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Opp filters
-  document.getElementById('opp-type-filter')?.addEventListener('change', () => {
-    loadOpportunities(document.getElementById('opp-type-filter').value, document.getElementById('opp-year-filter').value);
-  });
-  document.getElementById('opp-year-filter')?.addEventListener('change', () => {
-    loadOpportunities(document.getElementById('opp-type-filter').value, document.getElementById('opp-year-filter').value);
-  });
+  // ── Opp filters ──
+  document.getElementById('opp-type-filter')?.addEventListener('change', () =>
+    loadOpportunities(
+      document.getElementById('opp-type-filter').value,
+      document.getElementById('opp-year-filter').value
+    )
+  );
+  document.getElementById('opp-year-filter')?.addEventListener('change', () =>
+    loadOpportunities(
+      document.getElementById('opp-type-filter').value,
+      document.getElementById('opp-year-filter').value
+    )
+  );
 
-  // Modal close
+  // ── Modals ──
   document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeAllModals));
   document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', closeAllModals));
 
-  // Auth buttons
+  // ── Auth buttons ──
   ['ob-google-btn', 'modal-google-btn', 'settings-login-btn'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', signInWithGoogle);
   });
   document.getElementById('header-login-btn')?.addEventListener('click', () => showModal('login-modal'));
   document.getElementById('logout-btn')?.addEventListener('click', signOut);
 
-  // Posts
+  // ── Post actions ──
   document.getElementById('submit-post')?.addEventListener('click', submitImagePost);
   document.getElementById('submit-confession')?.addEventListener('click', submitConfession);
   document.getElementById('submit-comment')?.addEventListener('click', () => requireAuth(submitComment));
-  document.getElementById('comment-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') requireAuth(submitComment); });
+  document.getElementById('comment-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') requireAuth(submitComment);
+  });
   document.getElementById('save-caption-btn')?.addEventListener('click', saveEditedCaption);
 
-  // Bug report
+  // ── Report modal ──
+  document.querySelectorAll('.report-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.report-cat-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const otherInput = document.getElementById('report-other-input');
+      if (otherInput) {
+        otherInput.classList.toggle('hidden', btn.dataset.cat !== 'other');
+      }
+    });
+  });
+  document.getElementById('submit-report-btn')?.addEventListener('click', submitReport);
+
+  // ── More page ──
   document.getElementById('more-bug-btn')?.addEventListener('click', () => showModal('bug-modal'));
   document.getElementById('submit-bug')?.addEventListener('click', submitBugReport);
-
-  // More page panels
   document.getElementById('more-map-btn')?.addEventListener('click', () => toggleMorePanel('more-map-panel'));
   document.getElementById('more-lf-btn')?.addEventListener('click', () => toggleMorePanel('more-lf-panel'));
   document.getElementById('more-emergency-btn')?.addEventListener('click', () => toggleMorePanel('more-emergency-panel'));
 
-  // Settings dropdown in More
   document.getElementById('more-settings-toggle')?.addEventListener('click', () => {
     const dropdown = document.getElementById('more-settings-dropdown');
     const arrow = document.getElementById('settings-arrow');
@@ -236,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (arrow) arrow.textContent = dropdown?.classList.contains('hidden') ? '▾' : '▴';
   });
 
-  // Lost & Found tabs
+  // ── Lost & Found ──
   document.querySelectorAll('.lf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.lf-tab').forEach(t => t.classList.remove('active'));
@@ -244,47 +333,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadLostFound(tab.dataset.tab);
     });
   });
-  document.getElementById('report-item-btn')?.addEventListener('click', () => requireAuth(() => showModal('lost-item-modal')));
+  document.getElementById('report-item-btn')?.addEventListener('click', () =>
+    requireAuth(() => showModal('lost-item-modal'))
+  );
   document.getElementById('submit-item')?.addEventListener('click', submitLostItem);
 
-  // Search
-  document.getElementById('search-btn')?.addEventListener('click', () => {
-    document.getElementById('search-bar').classList.toggle('hidden');
-    if (!document.getElementById('search-bar').classList.contains('hidden')) {
-      document.getElementById('search-input').focus();
-    }
-  });
-  document.getElementById('search-close')?.addEventListener('click', () => {
-    document.getElementById('search-bar').classList.add('hidden');
-    document.getElementById('search-input').value = '';
-  });
-
-  // Profile
+  // ── Profile ──
   document.getElementById('save-profile-name')?.addEventListener('click', saveProfileName);
   document.getElementById('profile-avatar-edit-btn')?.addEventListener('click', () => {
     document.getElementById('profile-avatar-input')?.click();
   });
   document.getElementById('profile-avatar-input')?.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file || !currentUser) return;
-    const resized = await resizeImage(file);
-    const path = `${currentUser.id}/avatar.jpg`;
-    const { error } = await supabase.storage.from('avatars').upload(path, resized, { upsert: true, contentType: 'image/jpeg' });
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
-      document.getElementById('profile-avatar-img').src = publicUrl;
-      document.getElementById('user-avatar').src = publicUrl;
-      if (currentProfile) currentProfile.avatar_url = publicUrl;
-      showToast('Profile photo updated! ✅');
-    }
+    const file = e.target.files?.[0];
+    if (file) await handleAvatarUpload(file);
+    e.target.value = ''; // reset
   });
 
-  // Settings toggles
+  // ── Settings toggles ──
   const darkToggle = document.getElementById('dark-toggle');
   const animToggle = document.getElementById('anim-toggle');
-  if (localStorage.getItem('dark') === '1') { document.body.classList.add('dark'); if (darkToggle) darkToggle.checked = true; }
-  if (localStorage.getItem('reduce-anim') === '1') { document.body.classList.add('reduce-motion'); if (animToggle) animToggle.checked = true; }
+
+  if (localStorage.getItem('dark') === '1') {
+    document.body.classList.add('dark');
+    if (darkToggle) darkToggle.checked = true;
+  }
+  if (localStorage.getItem('reduce-anim') === '1') {
+    document.body.classList.add('reduce-motion');
+    if (animToggle) animToggle.checked = true;
+  }
+
   darkToggle?.addEventListener('change', () => {
     document.body.classList.toggle('dark', darkToggle.checked);
     localStorage.setItem('dark', darkToggle.checked ? '1' : '0');
@@ -294,8 +371,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('reduce-anim', animToggle.checked ? '1' : '0');
   });
 
-  // Prevent right-click on images globally
+  // ── Global: protect images ──
   document.addEventListener('contextmenu', (e) => {
-    if (e.target.closest('.card-images')) e.preventDefault();
+    if (e.target.closest('.card-images, .profile-grid-item')) e.preventDefault();
+  });
+  document.addEventListener('selectstart', (e) => {
+    if (e.target.closest('.card-images, .profile-grid-item')) e.preventDefault();
   });
 });

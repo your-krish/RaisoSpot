@@ -1,4 +1,5 @@
 // js/app.js
+
 // ===== UTILITIES =====
 function escapeHtml(str) {
   if (!str) return '';
@@ -12,8 +13,7 @@ function timeAgo(dateStr) {
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 function showToast(msg, duration = 3000) {
@@ -33,9 +33,17 @@ function closeAllModals() {
 }
 
 // ===== NAVIGATION =====
+let currentPage = 'feed';
+
 function navigateTo(page) {
+  // Guard: profile page requires auth
+  if (page === 'profile' && !currentUser) {
+    showModal('login-modal');
+    return;
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.classList.remove('active'));
 
   const pageEl = document.getElementById(`page-${page}`);
   if (pageEl) pageEl.classList.add('active');
@@ -43,19 +51,23 @@ function navigateTo(page) {
   const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
   if (navBtn) navBtn.classList.add('active');
 
-  // Load page content
+  currentPage = page;
+
+  // Always reload data on navigation to fix stale content bug
   if (page === 'feed') loadFeed(currentFilter);
-  if (page === 'academics') loadAcademics(currentYear || '1');
+  if (page === 'academics') loadAcademics(document.querySelector('.year-tab.active')?.dataset?.year || '1');
   if (page === 'opportunities') loadOpportunities();
-  if (page === 'settings') loadLostFound('lost');
+  if (page === 'more') loadLostFound('lost');
+  if (page === 'profile') {
+    updateProfilePage();
+    loadProfilePosts();
+  }
 }
 
 // ===== ONBOARDING =====
 function initOnboarding() {
-  const seen = localStorage.getItem('raisospot_onboarding');
-  if (!seen) {
-    document.getElementById('onboarding').classList.remove('hidden');
-  }
+  if (localStorage.getItem('raisospot_onboarding')) return;
+  document.getElementById('onboarding').classList.remove('hidden');
 
   let slide = 0;
   const slides = document.querySelectorAll('.slide');
@@ -72,7 +84,7 @@ function initOnboarding() {
 
   nextBtn.addEventListener('click', () => {
     if (slide < slides.length - 1) { slide++; goTo(slide); }
-    else { finishOnboarding(); }
+    else finishOnboarding();
   });
 
   document.getElementById('ob-google-btn').addEventListener('click', signInWithGoogle);
@@ -84,43 +96,16 @@ function finishOnboarding() {
   document.getElementById('onboarding').classList.add('hidden');
 }
 
-// ===== IMAGE UPLOAD =====
-let _selectedImages = [];
-window._selectedImages = _selectedImages;
-
-function initImageUpload() {
-  const dropZone = document.getElementById('image-drop-zone');
-  const input = document.getElementById('image-input');
-
-  dropZone?.addEventListener('click', () => input.click());
-  input?.addEventListener('change', e => handleImageFiles(e.target.files));
-}
-
-function handleImageFiles(files) {
-  const arr = Array.from(files);
-  if (arr.length + _selectedImages.length > MAX_IMAGES_PER_POST) {
-    showToast(`Max ${MAX_IMAGES_PER_POST} images allowed`);
-  }
-  const toAdd = arr.slice(0, MAX_IMAGES_PER_POST - _selectedImages.length);
-  _selectedImages.push(...toAdd);
-  window._selectedImages = _selectedImages;
-  renderPreviews();
-}
-
-function renderPreviews() {
-  const container = document.getElementById('image-previews');
-  container.innerHTML = '';
-  _selectedImages.forEach((file, i) => {
-    const url = URL.createObjectURL(file);
-    const wrap = document.createElement('div');
-    wrap.className = 'preview-wrap';
-    wrap.innerHTML = `<img src="${url}" /><button class="preview-remove" data-i="${i}">✕</button>`;
-    wrap.querySelector('.preview-remove').addEventListener('click', () => {
-      _selectedImages.splice(i, 1);
-      window._selectedImages = _selectedImages;
-      renderPreviews();
-    });
-    container.appendChild(wrap);
+// ===== MORE PAGE PANELS =====
+function toggleMorePanel(panelId) {
+  const panels = ['more-map-panel', 'more-lf-panel', 'more-emergency-panel'];
+  panels.forEach(id => {
+    const el = document.getElementById(id);
+    if (id === panelId) {
+      el?.classList.toggle('hidden');
+    } else {
+      el?.classList.add('hidden');
+    }
   });
 }
 
@@ -136,14 +121,8 @@ function initSearch() {
 
 async function performSearch(query) {
   if (!query) return;
-  const { data } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('status', 'active')
-    .ilike('caption', `%${query}%`)
-    .limit(20);
-
-  // Navigate to feed and show results
+  const { data } = await supabase.from('posts').select('*').eq('status', 'active')
+    .ilike('caption', `%${query}%`).limit(20);
   navigateTo('feed');
   document.getElementById('search-bar').classList.add('hidden');
   const container = document.getElementById('feed-container');
@@ -166,6 +145,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Nav buttons
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
     btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+  });
+
+  // Avatar click → profile
+  document.getElementById('user-avatar')?.addEventListener('click', () => {
+    if (currentUser) navigateTo('profile');
   });
 
   // Create button
@@ -196,12 +180,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      loadFeed(currentFilter);
+      loadFeed(btn.dataset.filter);
     });
   });
 
-  // Year tabs (academics)
+  // Year tabs
   document.querySelectorAll('.year-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('active'));
@@ -210,27 +193,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Opportunity filters
+  // Opp filters
   document.getElementById('opp-type-filter')?.addEventListener('change', () => {
-    loadOpportunities(
-      document.getElementById('opp-type-filter').value,
-      document.getElementById('opp-year-filter').value
-    );
+    loadOpportunities(document.getElementById('opp-type-filter').value, document.getElementById('opp-year-filter').value);
   });
   document.getElementById('opp-year-filter')?.addEventListener('change', () => {
-    loadOpportunities(
-      document.getElementById('opp-type-filter').value,
-      document.getElementById('opp-year-filter').value
-    );
+    loadOpportunities(document.getElementById('opp-type-filter').value, document.getElementById('opp-year-filter').value);
   });
 
-  // Modal close buttons
-  document.querySelectorAll('.modal-close').forEach(btn => {
-    btn.addEventListener('click', closeAllModals);
-  });
-  document.querySelectorAll('.modal-backdrop').forEach(bd => {
-    bd.addEventListener('click', closeAllModals);
-  });
+  // Modal close
+  document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeAllModals));
+  document.querySelectorAll('.modal-backdrop').forEach(bd => bd.addEventListener('click', closeAllModals));
 
   // Auth buttons
   ['ob-google-btn', 'modal-google-btn', 'settings-login-btn'].forEach(id => {
@@ -239,17 +212,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('header-login-btn')?.addEventListener('click', () => showModal('login-modal'));
   document.getElementById('logout-btn')?.addEventListener('click', signOut);
 
-  // Post submissions
+  // Posts
   document.getElementById('submit-post')?.addEventListener('click', submitImagePost);
   document.getElementById('submit-confession')?.addEventListener('click', submitConfession);
   document.getElementById('submit-comment')?.addEventListener('click', () => requireAuth(submitComment));
-  document.getElementById('comment-input')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') requireAuth(submitComment);
-  });
+  document.getElementById('comment-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') requireAuth(submitComment); });
+  document.getElementById('save-caption-btn')?.addEventListener('click', saveEditedCaption);
 
   // Bug report
-  document.getElementById('report-bug-btn')?.addEventListener('click', () => showModal('bug-modal'));
+  document.getElementById('more-bug-btn')?.addEventListener('click', () => showModal('bug-modal'));
   document.getElementById('submit-bug')?.addEventListener('click', submitBugReport);
+
+  // More page panels
+  document.getElementById('more-map-btn')?.addEventListener('click', () => toggleMorePanel('more-map-panel'));
+  document.getElementById('more-lf-btn')?.addEventListener('click', () => toggleMorePanel('more-lf-panel'));
+  document.getElementById('more-emergency-btn')?.addEventListener('click', () => toggleMorePanel('more-emergency-panel'));
+
+  // Settings dropdown in More
+  document.getElementById('more-settings-toggle')?.addEventListener('click', () => {
+    const dropdown = document.getElementById('more-settings-dropdown');
+    const arrow = document.getElementById('settings-arrow');
+    dropdown?.classList.toggle('hidden');
+    if (arrow) arrow.textContent = dropdown?.classList.contains('hidden') ? '▾' : '▴';
+  });
 
   // Lost & Found tabs
   document.querySelectorAll('.lf-tab').forEach(tab => {
@@ -259,9 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadLostFound(tab.dataset.tab);
     });
   });
-  document.getElementById('report-item-btn')?.addEventListener('click', () => {
-    requireAuth(() => showModal('lost-item-modal'));
-  });
+  document.getElementById('report-item-btn')?.addEventListener('click', () => requireAuth(() => showModal('lost-item-modal')));
   document.getElementById('submit-item')?.addEventListener('click', submitLostItem);
 
   // Search
@@ -276,19 +259,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('search-input').value = '';
   });
 
+  // Profile
+  document.getElementById('save-profile-name')?.addEventListener('click', saveProfileName);
+  document.getElementById('profile-avatar-edit-btn')?.addEventListener('click', () => {
+    document.getElementById('profile-avatar-input')?.click();
+  });
+  document.getElementById('profile-avatar-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+    const resized = await resizeImage(file);
+    const path = `${currentUser.id}/avatar.jpg`;
+    const { error } = await supabase.storage.from('avatars').upload(path, resized, { upsert: true, contentType: 'image/jpeg' });
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
+      document.getElementById('profile-avatar-img').src = publicUrl;
+      document.getElementById('user-avatar').src = publicUrl;
+      if (currentProfile) currentProfile.avatar_url = publicUrl;
+      showToast('Profile photo updated! ✅');
+    }
+  });
+
   // Settings toggles
   const darkToggle = document.getElementById('dark-toggle');
   const animToggle = document.getElementById('anim-toggle');
-
-  if (localStorage.getItem('dark') === '1') {
-    document.body.classList.add('dark');
-    if (darkToggle) darkToggle.checked = true;
-  }
-  if (localStorage.getItem('reduce-anim') === '1') {
-    document.body.classList.add('reduce-motion');
-    if (animToggle) animToggle.checked = true;
-  }
-
+  if (localStorage.getItem('dark') === '1') { document.body.classList.add('dark'); if (darkToggle) darkToggle.checked = true; }
+  if (localStorage.getItem('reduce-anim') === '1') { document.body.classList.add('reduce-motion'); if (animToggle) animToggle.checked = true; }
   darkToggle?.addEventListener('change', () => {
     document.body.classList.toggle('dark', darkToggle.checked);
     localStorage.setItem('dark', darkToggle.checked ? '1' : '0');
@@ -296,5 +292,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   animToggle?.addEventListener('change', () => {
     document.body.classList.toggle('reduce-motion', animToggle.checked);
     localStorage.setItem('reduce-anim', animToggle.checked ? '1' : '0');
+  });
+
+  // Prevent right-click on images globally
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest('.card-images')) e.preventDefault();
   });
 });

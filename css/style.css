@@ -22,8 +22,8 @@
   --radius-sm: 8px;
   --shadow: 0 2px 12px rgba(124,58,237,0.08);
   --shadow-md: 0 4px 24px rgba(124,58,237,0.15);
-  --font-display: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --transition: 0.2s ease;
 }
 
@@ -1230,6 +1230,40 @@ body.dark .toast { background: var(--surface2); }
   padding: 48px 16px;
   color: var(--text3);
   font-size: 15px;
+}
+
+/* ===== REPORT MODAL ===== */
+.report-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-cat-btn {
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.report-cat-btn:hover { background: var(--surface2); border-color: var(--primary); }
+.report-cat-btn.selected {
+  background: var(--surface2);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ===== DRAG OVER ===== */
+.drop-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--surface2);
 }
 
 #page-more { padding-top: 16px; }

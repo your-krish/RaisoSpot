@@ -83,6 +83,7 @@
       font-size: 18px;
       font-weight: 800;
       background: var(--gradient);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -606,7 +607,7 @@
 <script>
 // ===== CONFIG =====
 const SUPABASE_URL = 'https://kechmfekacwpplzogjue.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_p1lITBsEZxM7tCUdO42ShA_FAIvo57F';
+const SUPABASE_ANON_KEY = 'YOUR_FULL_PUBLISHABLE_KEY_HERE';
 const { createClient } = window.supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

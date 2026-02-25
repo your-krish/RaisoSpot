@@ -300,12 +300,16 @@ async function submitReport() {
       return;
     }
 
-    const { error } = await supabase.from('reports').insert({
+    // Build insert — category column may not exist on older schemas
+    const insertData = {
       post_id: reportingPostId,
       reporter_id: currentUser.id,
-      category,
-      reason,
-    });
+      reason: reason,
+    };
+    // Only include category if it's defined (safe for both old and new schema)
+    if (category) insertData.category = category;
+
+    const { error } = await supabase.from('reports').insert(insertData);
 
     if (error) throw error;
 

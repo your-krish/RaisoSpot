@@ -109,16 +109,7 @@ function renderSubjectCard(subject, resources) {
 }
 
 function renderResourceList(items, subjectAbbr, type) {
-  // Add sample question papers
-  const sampleQPs = type === 'question-papers'
-    ? [
-        { id: 'qp1', title: 'Winter 2024', url: '#', type: 'question-papers' },
-        { id: 'qp2', title: 'Summer 2025', url: '#', type: 'question-papers' },
-        { id: 'qp3', title: 'Winter 2025', url: '#', type: 'question-papers' },
-      ]
-    : [];
-
-  const allItems = [...items, ...sampleQPs];
+  const allItems = [...items];
 
   if (allItems.length === 0) {
     return `<p style="text-align:center;color:var(--text3);padding:20px;font-size:13px">No ${type} yet. Be the first to share!</p>`;

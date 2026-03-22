@@ -3,20 +3,22 @@ let currentUser = null;
 let currentProfile = null;
 
 async function initAuth() {
+  // Clear OAuth hash from URL after redirect to prevent token re-processing
+  if (window.location.hash.includes('access_token')) {
+    history.replaceState(null, '', window.location.pathname);
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (session) await handleSession(session);
 
   supabase.auth.onAuthStateChange(async (_event, session) => {
-    if (_event === 'SIGNED_IN') {
+    if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
       await handleSession(session);
-      if (!window.location.pathname.includes('profile')) {
+      // Only redirect to profile on a fresh login, not on token refresh
+      if (_event === 'SIGNED_IN' && !window.location.pathname.includes('profile')) {
         window.location.href = 'profile.html';
       }
     } else if (_event === 'SIGNED_OUT') {
-      currentUser = null;
-      currentProfile = null;
-      updateAuthUI(false);
-    } else {
       currentUser = null;
       currentProfile = null;
       updateAuthUI(false);

@@ -7,11 +7,15 @@ async function initAuth() {
   if (session) await handleSession(session);
 
   supabase.auth.onAuthStateChange(async (_event, session) => {
-    if (session) {
+    if (_event === 'SIGNED_IN') {
       await handleSession(session);
       if (!window.location.pathname.includes('profile')) {
         window.location.href = 'profile.html';
       }
+    } else if (_event === 'SIGNED_OUT') {
+      currentUser = null;
+      currentProfile = null;
+      updateAuthUI(false);
     } else {
       currentUser = null;
       currentProfile = null;
